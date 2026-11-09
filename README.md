@@ -1,1 +1,1 @@
-# ilk-projem
+Merhaba, bu benim ilk projem!
