@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yapılacaklar Listem</title>
+  <style>
+    :root { --bg: #fdf6e3; --kart: #ffffff; --yazi: #222; --soluk: #888; --yesil: #2da44e; --cizgi: #e6dfcc; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #16181d; --kart: #22252c; --yazi: #eee; --soluk: #8a8f99; --cizgi: #333843; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--yazi); padding: 16px; }
+    main { max-width: 480px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; margin: 8px 0 4px; }
+    .ozet { color: var(--soluk); margin: 0 0 16px; }
+    form { display: flex; gap: 8px; margin-bottom: 16px; }
+    input[type=text] { flex: 1; font-size: 1.1rem; padding: 12px; border-radius: 12px;
+                       border: 2px solid var(--cizgi); background: var(--kart); color: var(--yazi); }
+    button { font-size: 1.1rem; padding: 12px 16px; border: none; border-radius: 12px;
+             background: var(--yesil); color: #fff; cursor: pointer; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; align-items: center; gap: 12px; background: var(--kart); border: 1px solid var(--cizgi);
+         border-radius: 12px; padding: 12px; margin-bottom: 8px; font-size: 1.1rem; }
+    li input { width: 24px; height: 24px; accent-color: var(--yesil); flex-shrink: 0; }
+    li span { flex: 1; word-break: break-word; }
+    li.bitti span { text-decoration: line-through; color: var(--soluk); }
+    .sil { background: transparent; color: var(--soluk); padding: 4px 8px; font-size: 1.3rem; }
+    .bos { text-align: center; color: var(--soluk); padding: 32px 0; }
+    .temizle { background: transparent; color: var(--soluk); text-decoration: underline; padding: 8px 0; font-size: 1rem; }
+    a { color: var(--yesil); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>✅ Yapılacaklar Listem</h1>
+    <p class="ozet" id="ozet"></p>
+
+    <form id="form">
+      <input type="text" id="yeni" placeholder="Ne yapacaksın?" autocomplete="off" required>
+      <button type="submit">Ekle</button>
+    </form>
+
+    <ul id="liste"></ul>
+    <p class="bos" id="bos">Listen boş. Yukarıya bir iş yaz! ✏️</p>
+    <button class="temizle" id="temizle" hidden>Bitenleri sil</button>
+
+    <p><a href="index.html">← Ana sayfaya dön</a></p>
+  </main>
+
+  <script>
+    // Liste, bu cihazın tarayıcısında saklanır (telefonda ayrı, bilgisayarda ayrı).
+    const ANAHTAR = 'yapilacaklar';
+    let isler = [];
+    try { isler = JSON.parse(localStorage.getItem(ANAHTAR)) || []; } catch (e) { isler = []; }
+
+    function kaydet() {
+      try { localStorage.setItem(ANAHTAR, JSON.stringify(isler)); } catch (e) {}
+    }
+
+    function goster() {
+      const liste = document.getElementById('liste');
+      liste.innerHTML = '';
+      isler.forEach((is, i) => {
+        const li = document.createElement('li');
+        if (is.bitti) li.className = 'bitti';
+
+        const kutu = document.createElement('input');
+        kutu.type = 'checkbox';
+        kutu.checked = is.bitti;
+        kutu.onchange = () => { is.bitti = kutu.checked; kaydet(); goster(); };
+
+        const yazi = document.createElement('span');
+        yazi.textContent = is.metin;
+
+        const sil = document.createElement('button');
+        sil.className = 'sil';
+        sil.textContent = '✕';
+        sil.setAttribute('aria-label', 'Sil');
+        sil.onclick = () => { isler.splice(i, 1); kaydet(); goster(); };
+
+        li.append(kutu, yazi, sil);
+        liste.append(li);
+      });
+
+      const biten = isler.filter(is => is.bitti).length;
+      document.getElementById('bos').hidden = isler.length > 0;
+      document.getElementById('temizle').hidden = biten === 0;
+      document.getElementById('ozet').textContent = isler.length === 0 ? '' :
+        (biten === isler.length ? '🎉 Hepsi bitti, aferin!' : `${isler.length} işten ${biten} tanesi bitti`);
+    }
+
+    document.getElementById('form').onsubmit = (e) => {
+      e.preventDefault();
+      const kutu = document.getElementById('yeni');
+      const metin = kutu.value.trim();
+      if (!metin) return;
+      isler.push({ metin, bitti: false });
+      kutu.value = '';
+      kaydet();
+      goster();
+    };
+
+    document.getElementById('temizle').onclick = () => {
+      isler = isler.filter(is => !is.bitti);
+      kaydet();
+      goster();
+    };
+
+    goster();
+  </script>
+</body>
+</html>
